@@ -245,7 +245,7 @@ int main( int argc, char * argv[] )
 
 			for (int i = 0; i < bytes_read; ++i)
 			{
-				outdata << packet[i] << std::endl;
+				outdata << packet[i];
 			}
 			outdata.close();
 		
