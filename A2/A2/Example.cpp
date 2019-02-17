@@ -231,8 +231,7 @@ int main( int argc, char * argv[] )
 		while ( true )
 		{
 			unsigned char* packet = new unsigned char[30000];
-			int theSize = sizeof(packet);
-			int bytes_read = connection.ReceivePacket(packet, theSize);
+			int bytes_read = connection.ReceivePacket(packet, 30000);
 			if (bytes_read == 0)
 				break;
 			std::ofstream outdata; // outdata is like cin
