@@ -203,23 +203,26 @@ int main( int argc, char * argv[] )
 		{
 			unsigned char * packet;
 			std::ifstream is("test.txt", std::ifstream::binary);
-			if (is) 
+			if (!is) 
 			{
-				// get length of file:
-				is.seekg(0, is.end);
-				int length = is.tellg();
-				is.seekg(0, is.beg);
-
-				packet = new unsigned char[length];
-
-				// read data as a block:
-				is.read((char*)packet, length);
+				std::cout << "Error opening file to write to" << std::endl;
+				exit(-1);
 			}
+			// get length of file:
+			is.seekg(0, is.end);
+			int length = is.tellg();
+			is.seekg(0, is.beg);
+
+			packet = new unsigned char[length];
+
+			// read data as a block:
+			is.read((char*)packet, length);
 			//unsigned char packet[30000];
 			//memset( packet, 1, sizeof( packet ) );
 			PacketSize = sizeof(packet);
 			connection.SendPacket( packet, sizeof( packet ) );
 			sendAccumulator -= 1.0f / sendRate;
+			exit(2);
 		}
 		
 		//BELOW IS WHERE THE SERVER RECIEVES WHAT THE CLIENT SENT---ATTILA-DIV COMMENT
