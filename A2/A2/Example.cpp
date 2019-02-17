@@ -220,8 +220,9 @@ int main( int argc, char * argv[] )
 			is.read((char*)packet, length);
 			//unsigned char packet[30000];
 			//memset( packet, 1, sizeof( packet ) );
-			PacketSize = length;
-			checker = connection.SendPacket( packet, sizeof( packet ) );
+			/*PacketSize = length;
+			int theSize = sizeof(packet);*/
+			checker = connection.SendPacket( packet, length);
 			sendAccumulator -= 1.0f / sendRate;
 			//exit(2);
 		}
@@ -230,7 +231,8 @@ int main( int argc, char * argv[] )
 		while ( true )
 		{
 			unsigned char* packet = new unsigned char[30000];
-			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
+			int theSize = sizeof(packet);
+			int bytes_read = connection.ReceivePacket(packet, theSize);
 			if (bytes_read == 0)
 				break;
 			std::ofstream outdata; // outdata is like cin
