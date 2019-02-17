@@ -199,7 +199,7 @@ int main( int argc, char * argv[] )
 		sendAccumulator += DeltaTime;
 		
 		//BELOW IS WHERE THE FILE IS SENT FROM CLIENT--ATTILA-DIV COMMENT
-		while ( sendAccumulator > 1.0f / sendRate )
+		while ( sendAccumulator > 1.0f / sendRate && mode == Client )
 		{
 			unsigned char * packet;
 			std::ifstream is("test.txt", std::ifstream::binary);
@@ -228,7 +228,7 @@ int main( int argc, char * argv[] )
 		//BELOW IS WHERE THE SERVER RECIEVES WHAT THE CLIENT SENT---ATTILA-DIV COMMENT
 		while ( true )
 		{
-			unsigned char* packet = new unsigned char[PacketSize];
+			unsigned char* packet = new unsigned char[30000];
 			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
 			if (bytes_read == 0)
 				break;
@@ -241,7 +241,7 @@ int main( int argc, char * argv[] )
 				break;
 			}
 
-			for (int i = 0; i < PacketSize; ++i)
+			for (int i = 0; i < bytes_read; ++i)
 			{
 				outdata << packet[i] << std::endl;
 			}
