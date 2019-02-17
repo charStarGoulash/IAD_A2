@@ -219,7 +219,7 @@ int main( int argc, char * argv[] )
 			is.read((char*)packet, length);
 			//unsigned char packet[30000];
 			//memset( packet, 1, sizeof( packet ) );
-			PacketSize = sizeof(packet);
+			PacketSize = length;
 			connection.SendPacket( packet, sizeof( packet ) );
 			sendAccumulator -= 1.0f / sendRate;
 			exit(2);
