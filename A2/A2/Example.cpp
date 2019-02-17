@@ -198,7 +198,7 @@ int main( int argc, char * argv[] )
 		
 		sendAccumulator += DeltaTime;
 		
-		//BELOW IS WHERE THE FILE IS SENT FROM CLIENT--ATTILA-DIV COMMENT
+		//BELOW IS WHERE THE FILE IS SENT FROM CLIENT--ATTILA-DIV COMMENT THIS IS THE ONLY PLACE I BELIEVE I CHANGED CODE
 		while ( sendAccumulator > 1.0f / sendRate)
 		{
 			bool checker;
@@ -227,7 +227,7 @@ int main( int argc, char * argv[] )
 			//exit(2);
 		}
 		
-		//BELOW IS WHERE THE SERVER RECIEVES WHAT THE CLIENT SENT---ATTILA-DIV COMMENT
+		//BELOW IS WHERE THE SERVER RECIEVES WHAT THE CLIENT SENT---ATTILA-DIV COMMENT-ONLY CHANGED CODE HERE
 		while ( true )
 		{
 			unsigned char packet[30000];
