@@ -205,8 +205,8 @@ int main( int argc, char * argv[] )
 			std::ifstream is("test.txt", std::ifstream::binary);
 			if (!is) 
 			{
-				std::cout << "Error opening file to write to" << std::endl;
-				exit(-1);
+				//std::cout << "Error opening file to write from" << std::endl;
+				break;
 			}
 			// get length of file:
 			is.seekg(0, is.end);
@@ -238,7 +238,7 @@ int main( int argc, char * argv[] )
 			if (!outdata) 
 			{ // file couldn't be opened
 				std::cout << "Error: file could not be opened" << std::endl;
-				exit(-1);
+				break;
 			}
 
 			for (int i = 0; i < PacketSize; ++i)
