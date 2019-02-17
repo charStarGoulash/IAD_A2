@@ -230,8 +230,8 @@ int main( int argc, char * argv[] )
 		//BELOW IS WHERE THE SERVER RECIEVES WHAT THE CLIENT SENT---ATTILA-DIV COMMENT
 		while ( true )
 		{
-			unsigned char* packet = new unsigned char[30000];
-			int bytes_read = connection.ReceivePacket(packet, 30000);
+			unsigned char packet[30000];
+			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
 			if (bytes_read == 0)
 				break;
 			std::ofstream outdata; // outdata is like cin
