@@ -269,29 +269,39 @@ int main( int argc, char * argv[] )
 		//BELOW IS WHERE THE FILE IS SENT FROM CLIENT--ATTILA-DIV COMMENT THIS IS THE ONLY PLACE I BELIEVE I CHANGED CODE
 		while ( sendAccumulator > 1.0f / sendRate)
 		{
-			bool checker;
-			unsigned char * packet;
-			std::ifstream is(fileName, std::ifstream::binary);
-			if (!is) 
+			
+			if (mode == Client)
 			{
-				//std::cout << "Error opening file to write from" << std::endl;
-				break;
+				bool checker;
+				unsigned char * packet;
+				std::ifstream is(fileName, std::ifstream::binary);
+				if (!is)
+				{
+					//std::cout << "Error opening file to write from" << std::endl;
+					break;
+				}
+				// get length of file:
+				is.seekg(0, is.end);
+				int length = is.tellg();
+				is.seekg(0, is.beg);
+
+				packet = new unsigned char[length];
+
+				// read data as a block:
+				is.read((char*)packet, length);
+			
+				checker = connection.SendPacket(packet, length);
+				sendAccumulator -= 1.0f / sendRate;
 			}
-			// get length of file:
-			is.seekg(0, is.end);
-			int length = is.tellg();
-			is.seekg(0, is.beg);
-
-			packet = new unsigned char[length];
-
-			// read data as a block:
-			is.read((char*)packet, length);
-			//unsigned char packet[30000];
-			//memset( packet, 1, sizeof( packet ) );
-			/*PacketSize = length;
-			int theSize = sizeof(packet);*/
-			checker = connection.SendPacket( packet, length);
-			sendAccumulator -= 1.0f / sendRate;
+			else
+			{
+				unsigned char packet[30000];
+				memset( packet, 1, sizeof( packet ) );
+				connection.SendPacket(packet, sizeof(packet));
+				sendAccumulator -= 1.0f / sendRate;
+				/*PacketSize = length;
+				int theSize = sizeof(packet);*/
+			}
 			//exit(2);
 		}
 		
@@ -302,20 +312,23 @@ int main( int argc, char * argv[] )
 			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
 			if (bytes_read == 0)
 				break;
-			std::ofstream outdata; // outdata is like cin
-
-			outdata.open("testREC.txt"); // opens the file
-			if (!outdata) 
-			{ // file couldn't be opened
-				std::cout << "Error: file could not be opened" << std::endl;
-				break;
-			}
-
-			for (int i = 0; i < bytes_read; ++i)
+			if (mode == Server)
 			{
-				outdata << packet[i];
+				std::ofstream outdata; // outdata is like cin
+
+				outdata.open("testREC.txt"); // opens the file
+				if (!outdata)
+				{ // file couldn't be opened
+					std::cout << "Error: file could not be opened" << std::endl;
+					break;
+				}
+
+				for (int i = 0; i < bytes_read; ++i)
+				{
+					outdata << packet[i];
+				}
+				outdata.close();
 			}
-			outdata.close();
 		
 		}
 		
