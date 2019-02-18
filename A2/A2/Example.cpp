@@ -7,13 +7,14 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <string>
 
 #include "TheNetwork.h"
 
 //#define SHOW_ACKS
 
-const int ServerPort = 30000;
-const int ClientPort = 30001;
+int ServerPort = 1;
+int ClientPort = 30001;
 const int ProtocolId = 0x11223344;
 const float DeltaTime = 1.0f / 30.0f;
 const float SendRate = 1.0f / 30.0f;
@@ -114,8 +115,6 @@ private:
 
 int main( int argc, char * argv[] )
 {
-	// parse command line
-
 	enum Mode
 	{
 		Client,
@@ -124,17 +123,86 @@ int main( int argc, char * argv[] )
 
 	Mode mode = Server;
 	theNet::Address address;
+	std::string fileName;
+	int a, b, c, d;		// to store the IP
+	//////////////////////////////////////////////////////////////////////
+	
+	
+	if (argc == 3)
+	{
+		mode = Server;
+		if (strcmp(argv[1], "-p") == 0 || strcmp(argv[1], "-P") == 0)
+		{
+			if (!(ServerPort = std::stoi(argv[2])))
+			{
+				printf("Please provide Port Number for server Correctly");
+			}
+		}
+	}
+	else if (argc == 7)
+	{
 
+		for (int i = 0; i < argc; i++)
+		{
+
+
+			// getting the port number for the client 
+			if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "-P") == 0)
+			{
+				if (!(ServerPort = std::stoi(argv[i + 1])))
+				{
+					printf("Please provide Port Number Correctly");
+					return 0;
+				}
+			}
+
+			// getting the ip address of the server for client to connect
+			if (strcmp(argv[i], "-a") == 0 || strcmp(argv[i], "-A") == 0)
+			{
+				
+				if (sscanf(argv[i+1], "%d.%d.%d.%d", &a, &b, &c, &d))
+				{
+					mode = Client;
+
+				}
+			}
+
+			// getting the File Name from user.
+			if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "-F") == 0)
+			{
+				fileName = argv[i + 1];
+			}
+
+		}
+
+	}
+	else
+	{
+		printf("Please provide all the paremeter");
+		return 0;
+	}
+	address = theNet::Address(a, b, c, d, ServerPort);
+	/////////////////////////////////////////////////////////////////////////
+	// parse command line
+
+
+	/*
 	if ( argc >= 2 )
 	{
 		int a,b,c,d;
 		if ( sscanf( argv[1], "%d.%d.%d.%d", &a, &b, &c, &d ) )
 		{
+			if (!argc == 3)
+			{
+				printf("Error: please provide both ip address and filename");
+				exit(1);
+			}
 			mode = Client;
+			fileName = argv[2];
 			address = theNet::Address(a,b,c,d,ServerPort);
 		}
 	}
-
+	*/
 	// initialize
 
 	if ( !theNet::InitializeSockets() )
@@ -203,7 +271,7 @@ int main( int argc, char * argv[] )
 		{
 			bool checker;
 			unsigned char * packet;
-			std::ifstream is("test.txt", std::ifstream::binary);
+			std::ifstream is(fileName, std::ifstream::binary);
 			if (!is) 
 			{
 				//std::cout << "Error opening file to write from" << std::endl;

@@ -1034,7 +1034,7 @@ namespace theNet
 			unsigned int ack = reliabilitySystem.GetRemoteSequence();
 			unsigned int ack_bits = reliabilitySystem.GenerateAckBits();
 			WriteHeader( packet, seq, ack, ack_bits );
-      std::memcpy( packet + header, data, size );
+			std::memcpy( packet + header, data, size );
  			if ( !Connection::SendPacket( packet, size + header ) )
 				return false;
 			reliabilitySystem.PacketSent( size );
