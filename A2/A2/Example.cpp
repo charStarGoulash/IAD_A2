@@ -10,6 +10,7 @@
 #include <string>
 
 #include "TheNetwork.h"
+#include "CRC.h"
 
 //#define SHOW_ACKS
 
@@ -144,8 +145,6 @@ int main( int argc, char * argv[] )
 
 		for (int i = 0; i < argc; i++)
 		{
-
-
 			// getting the port number for the client 
 			if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "-P") == 0)
 			{
