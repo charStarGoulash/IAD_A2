@@ -174,14 +174,14 @@ int main( int argc, char * argv[] )
 			}
 
 		}
-
+		address = theNet::Address(a, b, c, d, ServerPort);
 	}
 	else
 	{
 		printf("Please provide all the paremeter");
 		return 0;
 	}
-	address = theNet::Address(a, b, c, d, ServerPort);
+	
 	/////////////////////////////////////////////////////////////////////////
 	// parse command line
 
