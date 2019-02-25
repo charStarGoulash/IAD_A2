@@ -21,10 +21,28 @@ const float DeltaTime = 1.0f / 30.0f;
 const float SendRate = 1.0f / 30.0f;
 const float TimeOut = 10.0f;
 int PacketSize;
+bool initialMessage = false;
+unsigned char * filePacket;
+int fileLength;
+
+/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
+struct fileInfo
+{
+	
+	int thePacketSize;
+	int theTotalBytes;
+	std::uint32_t crc;
+	std::string filename;
+};
+/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
+fileInfo firstMessage;
+
+
 
 class FlowControl
 {
 public:
+	
 	
 	FlowControl()
 	{
@@ -132,6 +150,7 @@ int main( int argc, char * argv[] )
 	if (argc == 3)
 	{
 		mode = Server;
+		initialMessage = true;
 		if (strcmp(argv[1], "-p") == 0 || strcmp(argv[1], "-P") == 0)
 		{
 			if (!(ServerPort = std::stoi(argv[2])))
@@ -142,6 +161,7 @@ int main( int argc, char * argv[] )
 	}
 	else if (argc == 7)
 	{
+		initialMessage = true;
 
 		for (int i = 0; i < argc; i++)
 		{
@@ -165,11 +185,31 @@ int main( int argc, char * argv[] )
 
 				}
 			}
-
-			// getting the File Name from user.
+			/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
+			// getting the File Name from user.//CHANGED TO OPEN FILE AND LOAD STRUCT HERE
 			if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "-F") == 0)
 			{
 				fileName = argv[i + 1];
+				firstMessage.filename = fileName;
+
+				std::ifstream is(fileName, std::ifstream::binary);
+				if (!is)
+				{
+					//std::cout << "Error opening file to write from" << std::endl;
+					break;
+				}
+				// get length of file:
+				is.seekg(0, is.end);
+				fileLength = is.tellg();
+				is.seekg(0, is.beg);
+
+				filePacket = new unsigned char[fileLength];
+
+				// read data as a block:
+				is.read((char*)filePacket, fileLength);
+				firstMessage.theTotalBytes = fileLength;
+				firstMessage.thePacketSize = fileLength / 50000;
+				firstMessage.crc = CRC::Calculate(filePacket, firstMessage.theTotalBytes, CRC::CRC_32());
 			}
 
 		}
@@ -184,24 +224,6 @@ int main( int argc, char * argv[] )
 	/////////////////////////////////////////////////////////////////////////
 	// parse command line
 
-
-	/*
-	if ( argc >= 2 )
-	{
-		int a,b,c,d;
-		if ( sscanf( argv[1], "%d.%d.%d.%d", &a, &b, &c, &d ) )
-		{
-			if (!argc == 3)
-			{
-				printf("Error: please provide both ip address and filename");
-				exit(1);
-			}
-			mode = Client;
-			fileName = argv[2];
-			address = theNet::Address(a,b,c,d,ServerPort);
-		}
-	}
-	*/
 	// initialize
 
 	if ( !theNet::InitializeSockets() )
@@ -264,32 +286,28 @@ int main( int argc, char * argv[] )
 		// send and receive packets
 		
 		sendAccumulator += DeltaTime;
-		
+		/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 		//BELOW IS WHERE THE FILE IS SENT FROM CLIENT--ATTILA-DIV COMMENT THIS IS THE ONLY PLACE I BELIEVE I CHANGED CODE
 		while ( sendAccumulator > 1.0f / sendRate)
 		{
-			
-			if (mode == Client)
+			if (mode == Client && initialMessage)
+			{
+				//BELOW I AM MAKING AN INITIAL MESSAGE TO BE SENT WITH ALL THE DATA FROM THE FIRST MESSAGE STRUCT
+				bool checker;
+				std::string temp = firstMessage.filename + "-" + std::to_string(firstMessage.theTotalBytes) + "-" + std::to_string(firstMessage.thePacketSize) + "-" + std::to_string(firstMessage.crc);
+				
+				unsigned char* packet = (unsigned char*)temp.c_str();
+
+				checker = connection.SendPacket(packet, fileLength);
+
+				initialMessage = false;
+			}
+			/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
+			else if (mode == Client && !initialMessage)
 			{
 				bool checker;
-				unsigned char * packet;
-				std::ifstream is(fileName, std::ifstream::binary);
-				if (!is)
-				{
-					//std::cout << "Error opening file to write from" << std::endl;
-					break;
-				}
-				// get length of file:
-				is.seekg(0, is.end);
-				int length = is.tellg();
-				is.seekg(0, is.beg);
-
-				packet = new unsigned char[length];
-
-				// read data as a block:
-				is.read((char*)packet, length);
 			
-				checker = connection.SendPacket(packet, length);
+				checker = connection.SendPacket(filePacket, firstMessage.theTotalBytes);
 				sendAccumulator -= 1.0f / sendRate;
 			}
 			else
@@ -298,10 +316,7 @@ int main( int argc, char * argv[] )
 				memset( packet, 1, sizeof( packet ) );
 				connection.SendPacket(packet, sizeof(packet));
 				sendAccumulator -= 1.0f / sendRate;
-				/*PacketSize = length;
-				int theSize = sizeof(packet);*/
 			}
-			//exit(2);
 		}
 		
 		//BELOW IS WHERE THE SERVER RECIEVES WHAT THE CLIENT SENT---ATTILA-DIV COMMENT-ONLY CHANGED CODE HERE
@@ -311,22 +326,83 @@ int main( int argc, char * argv[] )
 			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
 			if (bytes_read == 0)
 				break;
-			if (mode == Server)
+			/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
+			int crcCheck = CRC::Calculate(packet, firstMessage.theTotalBytes, CRC::CRC_32());
+			if (mode == Server && !initialMessage)
 			{
-				std::ofstream outdata; // outdata is like cin
+				if (crcCheck == firstMessage.crc)
+				{
+					std::cout << "FILE CONFIRMED" << std::endl;
 
-				outdata.open("testREC.txt"); // opens the file
-				if (!outdata)
-				{ // file couldn't be opened
-					std::cout << "Error: file could not be opened" << std::endl;
+					std::ofstream outdata; // outdata is like cin
+
+					outdata.open(firstMessage.filename); // opens the file
+					if (!outdata)
+					{ // file couldn't be opened
+						std::cout << "Error: file could not be opened" << std::endl;
+						break;
+					}
+
+					for (int i = 0; i < bytes_read; ++i)
+					{
+						outdata << packet[i];
+					}
+					outdata.close();
+
 					break;
 				}
-
-				for (int i = 0; i < bytes_read; ++i)
+				else
 				{
-					outdata << packet[i];
+					std::cout << "Not Confirms, will try again" << std::endl;
+				}				
+			}
+			/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
+			else if (mode == Server && initialMessage)
+			{
+
+				std::string TEMPtheTotalBytes;
+				std::string TEMPthePacketSize;
+				
+				std::string TEMPcrc;
+
+				int check = 0;
+				/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
+				//BELOW I AM ITTERATING THROUGH THE ARRAY I RECEIVED AND POPULATING THE STRUCT 
+				for (int i = 0; i < strlen((char*)packet); i++)
+				{
+					// getting the port number for the client 
+					if (packet[i] == '-')
+					{
+						i++;
+						check++;
+					}
+
+					if (check == 0)
+					{
+						firstMessage.filename += packet[i];
+					}
+
+					if (check == 1)
+					{
+						TEMPtheTotalBytes += packet[i];
+					}
+
+					if (check == 2)
+					{
+						TEMPthePacketSize += packet[i];
+					}
+
+					if (check == 3)
+					{
+						TEMPcrc+= packet[i];
+					}
+					
 				}
-				outdata.close();
+				/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
+				firstMessage.theTotalBytes = std::stoi(TEMPtheTotalBytes);
+				firstMessage.thePacketSize = std::stoi(TEMPthePacketSize);
+				firstMessage.crc = std::stoi(TEMPcrc);
+				initialMessage = false;
 			}
 		
 		}

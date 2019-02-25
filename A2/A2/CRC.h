@@ -3,6 +3,7 @@
 /**
 	@file CRC.h
 	@author Daniel Bahr
+	@https://github.com/d-bahr/CRCpp
 	@version 0.2.0.6
 	@copyright
 	@parblock

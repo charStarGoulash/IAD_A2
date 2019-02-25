@@ -259,3 +259,5 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/A2/A2/Project2/Project2
+/A2/A2/Project2.zip
