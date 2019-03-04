@@ -214,7 +214,7 @@ int main(int argc, char * argv[])
 				// read data as a block:
 				is.read((char*)filePacket, fileLength);
 				firstMessage.theTotalBytes = fileLength;
-				firstMessage.thePacketSize = fileLength / 50000;
+				firstMessage.thePacketSize = 256;
 				firstMessage.crc = CRC::Calculate(filePacket, firstMessage.theTotalBytes, CRC::CRC_32());
 			}
 
