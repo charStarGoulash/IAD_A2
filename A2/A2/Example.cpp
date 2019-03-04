@@ -215,10 +215,8 @@ int main(int argc, char * argv[])
 				is.read((char*)filePacket, fileLength);
 				firstMessage.theTotalBytes = fileLength;
 				firstMessage.thePacketSize = 256;
-				//int check = CRC::Calculate(filePacket, firstMessage.theTotalBytes, CRC::CRC_32());
+				std::cout << sizeof(filePacket) << std::endl;
 				firstMessage.crc = CRC::Calculate(filePacket, firstMessage.theTotalBytes, CRC::CRC_32());
-
-				std::cout << filePacket << std::endl;
 			}
 
 		}
@@ -386,7 +384,7 @@ int main(int argc, char * argv[])
 				}
 				if (fileDone)
 				{
-					std::cout << packetRec << std::endl;
+					std::cout << sizeof(packetRec) << std::endl;
 					uint32_t crcCheck = CRC::Calculate(packetRec, firstMessage.theTotalBytes, CRC::CRC_32());
 					if (crcCheck == firstMessage.crc)
 					{
