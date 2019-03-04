@@ -24,6 +24,9 @@ int PacketSize;
 bool initialMessage = false;
 unsigned char * filePacket;
 int fileLength;
+unsigned char* packetRec;
+int arrayCheck = 0;
+int recievedChecker = 256;
 
 /////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 struct fileInfo
@@ -325,14 +328,32 @@ int main( int argc, char * argv[] )
 		//BELOW IS WHERE THE SERVER RECIEVES WHAT THE CLIENT SENT---ATTILA-DIV COMMENT-ONLY CHANGED CODE HERE
 		while ( true )
 		{
-			unsigned char packet[30000];
-			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
-			if (bytes_read == 0)
-				break;
+			if (!initialMessage && arrayCheck == 0)
+			{
+				packetRec = new unsigned char[firstMessage.theTotalBytes];
+				arrayCheck = 1;
+			}
+			else if (!initialMessage && arrayCheck == 1)
+			{
+				int bytes_read = connection.ReceivePacket(packetRec, firstMessage.thePacketSize);
+				if (bytes_read == 0)
+					break;
+				recievedChecker += 256;
+			}
+			else
+			{
+				packetRec = new unsigned char[30000];
+				int bytes_read = connection.ReceivePacket(packetRec, sizeof(packetRec));
+				if (bytes_read == 0)
+					break;
+			}
+			
 			/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
-			int crcCheck = CRC::Calculate(packet, firstMessage.theTotalBytes, CRC::CRC_32());
+			
 			if (mode == Server && !initialMessage)
 			{
+
+				int crcCheck = CRC::Calculate(packetRec, firstMessage.theTotalBytes, CRC::CRC_32());
 				if (crcCheck == firstMessage.crc)
 				{
 					std::cout << "FILE CONFIRMED" << std::endl;
@@ -360,9 +381,9 @@ int main( int argc, char * argv[] )
 						break;
 					}
 
-					for (int i = 0; i < bytes_read; ++i)
+					for (int i = 0; i < firstMessage.theTotalBytes; ++i)
 					{
-						outdata << packet[i];
+						outdata << packetRec[i];
 					}
 					outdata.close();
 					connection.KillLoop(1);
@@ -385,10 +406,10 @@ int main( int argc, char * argv[] )
 				int check = 0;
 				/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 				//BELOW I AM ITTERATING THROUGH THE ARRAY I RECEIVED AND POPULATING THE STRUCT 
-				for (int i = 0; i < strlen((char*)packet); i++)
+				for (int i = 0; i < strlen((char*)packetRec); i++)
 				{
 					// getting the port number for the client 
-					if (packet[i] == '-')
+					if (packetRec[i] == '-')
 					{
 						i++;
 						check++;
@@ -396,22 +417,22 @@ int main( int argc, char * argv[] )
 
 					if (check == 0)
 					{
-						firstMessage.filename += packet[i];
+						firstMessage.filename += packetRec[i];
 					}
 
 					if (check == 1)
 					{
-						TEMPtheTotalBytes += packet[i];
+						TEMPtheTotalBytes += packetRec[i];
 					}
 
 					if (check == 2)
 					{
-						TEMPthePacketSize += packet[i];
+						TEMPthePacketSize += packetRec[i];
 					}
 
 					if (check == 3)
 					{
-						TEMPcrc+= packet[i];
+						TEMPcrc+= packetRec[i];
 					}
 					
 				}
