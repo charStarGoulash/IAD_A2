@@ -363,6 +363,7 @@ int main(int argc, char * argv[])
 						int bytes_read = connection.ReceivePacket(packetRec, firstMessage.thePacketSize);
 						if (bytes_read == 0)
 							break;
+						recBytesCheck += 256;
 					}
 					else
 					{
