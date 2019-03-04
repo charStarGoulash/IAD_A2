@@ -304,7 +304,12 @@ int main(int argc, char * argv[])
 
 				unsigned char* packet = (unsigned char*)temp.c_str();
 
-				checker = connection.SendPacket(packet, fileLength);
+				checker = connection.SendPacket(packet, sizeof(packet));
+				
+				while (!checker)
+				{
+					checker = connection.SendPacket(packet, sizeof(packet));
+				}
 
 				initialMessage = false;
 			}
