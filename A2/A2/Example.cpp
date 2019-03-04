@@ -28,7 +28,7 @@ int fileLength;
 /////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 struct fileInfo
 {
-	
+
 	int thePacketSize;
 	int theTotalBytes;
 	std::uint32_t crc;
@@ -42,14 +42,14 @@ fileInfo firstMessage;
 class FlowControl
 {
 public:
-	
-	
+
+
 	FlowControl()
 	{
-		printf( "flow control initialized\n" );
+		printf("flow control initialized\n");
 		Reset();
 	}
-	
+
 	void Reset()
 	{
 		mode = Bad;
@@ -57,52 +57,52 @@ public:
 		good_conditions_time = 0.0f;
 		penalty_reduction_accumulator = 0.0f;
 	}
-	
-	void Update( float deltaTime, float rtt )
+
+	void Update(float deltaTime, float rtt)
 	{
 		const float RTT_Threshold = 250.0f;
 
-		if ( mode == Good )
+		if (mode == Good)
 		{
-			if ( rtt > RTT_Threshold )
+			if (rtt > RTT_Threshold)
 			{
-				printf( "*** dropping to bad mode ***\n" );
+				printf("*** dropping to bad mode ***\n");
 				mode = Bad;
-				if ( good_conditions_time < 10.0f && penalty_time < 60.0f )
+				if (good_conditions_time < 10.0f && penalty_time < 60.0f)
 				{
 					penalty_time *= 2.0f;
-					if ( penalty_time > 60.0f )
+					if (penalty_time > 60.0f)
 						penalty_time = 60.0f;
-					printf( "penalty time increased to %.1f\n", penalty_time );
+					printf("penalty time increased to %.1f\n", penalty_time);
 				}
 				good_conditions_time = 0.0f;
 				penalty_reduction_accumulator = 0.0f;
 				return;
 			}
-			
+
 			good_conditions_time += deltaTime;
 			penalty_reduction_accumulator += deltaTime;
-			
-			if ( penalty_reduction_accumulator > 10.0f && penalty_time > 1.0f )
+
+			if (penalty_reduction_accumulator > 10.0f && penalty_time > 1.0f)
 			{
 				penalty_time /= 2.0f;
-				if ( penalty_time < 1.0f )
+				if (penalty_time < 1.0f)
 					penalty_time = 1.0f;
-				printf( "penalty time reduced to %.1f\n", penalty_time );
+				printf("penalty time reduced to %.1f\n", penalty_time);
 				penalty_reduction_accumulator = 0.0f;
 			}
 		}
-		
-		if ( mode == Bad )
+
+		if (mode == Bad)
 		{
-			if ( rtt <= RTT_Threshold )
+			if (rtt <= RTT_Threshold)
 				good_conditions_time += deltaTime;
 			else
 				good_conditions_time = 0.0f;
-				
-			if ( good_conditions_time > penalty_time )
+
+			if (good_conditions_time > penalty_time)
 			{
-				printf( "*** upgrading to good mode ***\n" );
+				printf("*** upgrading to good mode ***\n");
 				good_conditions_time = 0.0f;
 				penalty_reduction_accumulator = 0.0f;
 				mode = Good;
@@ -110,12 +110,12 @@ public:
 			}
 		}
 	}
-	
+
 	float GetSendRate()
 	{
 		return mode == Good ? 30.0f : 10.0f;
 	}
-	
+
 private:
 
 	enum Mode
@@ -132,7 +132,7 @@ private:
 
 // ----------------------------------------------
 
-int main( int argc, char * argv[] )
+int main(int argc, char * argv[])
 {
 	enum Mode
 	{
@@ -145,8 +145,8 @@ int main( int argc, char * argv[] )
 	std::string fileName;
 	int a, b, c, d;		// to store the IP
 	//////////////////////////////////////////////////////////////////////
-	
-	
+
+
 	if (argc == 3)
 	{
 		mode = Server;
@@ -178,8 +178,8 @@ int main( int argc, char * argv[] )
 			// getting the ip address of the server for client to connect
 			if (strcmp(argv[i], "-a") == 0 || strcmp(argv[i], "-A") == 0)
 			{
-				
-				if (sscanf(argv[i+1], "%d.%d.%d.%d", &a, &b, &c, &d))
+
+				if (sscanf(argv[i + 1], "%d.%d.%d.%d", &a, &b, &c, &d))
 				{
 					mode = Client;
 
@@ -220,82 +220,82 @@ int main( int argc, char * argv[] )
 		printf("Please provide all the paremeter");
 		return 0;
 	}
-	
+
 	/////////////////////////////////////////////////////////////////////////
 	// parse command line
 
 	// initialize
 
-	if ( !theNet::InitializeSockets() )
+	if (!theNet::InitializeSockets())
 	{
-		printf( "failed to initialize sockets\n" );
+		printf("failed to initialize sockets\n");
 		return 1;
 	}
 
-	theNet::ReliableConnection connection( ProtocolId, TimeOut );
-	
+	theNet::ReliableConnection connection(ProtocolId, TimeOut);
+
 	const int port = mode == Server ? ServerPort : ClientPort;
-	
-	if ( !connection.Start( port ) )
+
+	if (!connection.Start(port))
 	{
-		printf( "could not start connection on port %d\n", port );
+		printf("could not start connection on port %d\n", port);
 		return 1;
 	}
-	
-	if ( mode == Client )
-		connection.Connect( address );
+
+	if (mode == Client)
+		connection.Connect(address);
 	else
 		connection.Listen();
-	
+
 	bool connected = false;
 	float sendAccumulator = 0.0f;
 	float statsAccumulator = 0.0f;
-	
+
 	FlowControl flowControl;
-	
-	while ( true )
+
+	while (true)
 	{
 		// update flow control
-		
-		if ( connection.IsConnected() )
-			flowControl.Update( DeltaTime, connection.GetReliabilitySystem().GetRoundTripTime() * 1000.0f );
-		
+
+		if (connection.IsConnected())
+			flowControl.Update(DeltaTime, connection.GetReliabilitySystem().GetRoundTripTime() * 1000.0f);
+
 		const float sendRate = flowControl.GetSendRate();
 
 		// detect changes in connection state
 
-		if ( mode == Server && connected && !connection.IsConnected() )
+		if (mode == Server && connected && !connection.IsConnected())
 		{
 			flowControl.Reset();
-			printf( "reset flow control\n" );
+			printf("reset flow control\n");
 			connected = false;
 		}
 
-		if ( !connected && connection.IsConnected() )
+		if (!connected && connection.IsConnected())
 		{
-			printf( "client connected to server\n" );
+			printf("client connected to server\n");
 			connected = true;
 		}
-		
-		if ( !connected && connection.ConnectFailed() )
+
+		if (!connected && connection.ConnectFailed())
 		{
-			printf( "connection failed\n" );
+			printf("connection failed\n");
 			break;
 		}
-		
+
 		// send and receive packets
-		
+
 		sendAccumulator += DeltaTime;
 		/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 		//BELOW IS WHERE THE FILE IS SENT FROM CLIENT--ATTILA-DIV COMMENT THIS IS THE ONLY PLACE I BELIEVE I CHANGED CODE
-		while ( sendAccumulator > 1.0f / sendRate)
+		while (sendAccumulator > 1.0f / sendRate)
 		{
 			if (mode == Client && initialMessage)
 			{
 				//BELOW I AM MAKING AN INITIAL MESSAGE TO BE SENT WITH ALL THE DATA FROM THE FIRST MESSAGE STRUCT
 				bool checker;
 				std::string temp = firstMessage.filename + "-" + std::to_string(firstMessage.theTotalBytes) + "-" + std::to_string(firstMessage.thePacketSize) + "-" + std::to_string(firstMessage.crc);
-				
+
 				unsigned char* packet = (unsigned char*)temp.c_str();
 
 				checker = connection.SendPacket(packet, fileLength);
@@ -306,7 +306,7 @@ int main( int argc, char * argv[] )
 			else if (mode == Client && !initialMessage)
 			{
 				bool checker;
-			
+
 				checker = connection.SendPacket(filePacket, firstMessage.theTotalBytes);
 				sendAccumulator -= 1.0f / sendRate;
 
@@ -316,14 +316,14 @@ int main( int argc, char * argv[] )
 			else
 			{
 				unsigned char packet[30000];
-				memset( packet, 1, sizeof( packet ) );
+				memset(packet, 1, sizeof(packet));
 				connection.SendPacket(packet, sizeof(packet));
 				sendAccumulator -= 1.0f / sendRate;
 			}
 		}
-		
+
 		//BELOW IS WHERE THE SERVER RECIEVES WHAT THE CLIENT SENT---ATTILA-DIV COMMENT-ONLY CHANGED CODE HERE
-		while ( true )
+		while (true)
 		{
 			unsigned char packet[30000];
 			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
@@ -371,7 +371,7 @@ int main( int argc, char * argv[] )
 				else
 				{
 					std::cout << "Not Confirms, will try again" << std::endl;
-				}				
+				}
 			}
 			/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 			else if (mode == Server && initialMessage)
@@ -379,7 +379,7 @@ int main( int argc, char * argv[] )
 
 				std::string TEMPtheTotalBytes;
 				std::string TEMPthePacketSize;
-				
+
 				std::string TEMPcrc;
 
 				int check = 0;
@@ -411,9 +411,9 @@ int main( int argc, char * argv[] )
 
 					if (check == 3)
 					{
-						TEMPcrc+= packet[i];
+						TEMPcrc += packet[i];
 					}
-					
+
 				}
 				/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 				firstMessage.theTotalBytes = std::stoi(TEMPtheTotalBytes);
@@ -421,54 +421,54 @@ int main( int argc, char * argv[] )
 				firstMessage.crc = std::stoll(TEMPcrc);
 				initialMessage = false;
 			}
-		
+
 		}
-		
+
 		// show packets that were acked this frame
-		
-		#ifdef SHOW_ACKS
+
+#ifdef SHOW_ACKS
 		unsigned int * acks = NULL;
 		int ack_count = 0;
-		connection.GetReliabilitySystem().GetAcks( &acks, ack_count );
-		if ( ack_count > 0 )
+		connection.GetReliabilitySystem().GetAcks(&acks, ack_count);
+		if (ack_count > 0)
 		{
-			printf( "acks: %d", acks[0] );
-			for ( int i = 1; i < ack_count; ++i )
-				printf( ",%d", acks[i] );
-			printf( "\n" );
+			printf("acks: %d", acks[0]);
+			for (int i = 1; i < ack_count; ++i)
+				printf(",%d", acks[i]);
+			printf("\n");
 		}
-		#endif
+#endif
 
 		// update connection
-		
-		connection.Update( DeltaTime );
+
+		connection.Update(DeltaTime);
 
 		// show connection stats
-		
+
 		statsAccumulator += DeltaTime;
 
-		while ( statsAccumulator >= 0.25f && connection.IsConnected() )
+		while (statsAccumulator >= 0.25f && connection.IsConnected())
 		{
 			float rtt = connection.GetReliabilitySystem().GetRoundTripTime();
-			
+
 			unsigned int sent_packets = connection.GetReliabilitySystem().GetSentPackets();
 			unsigned int acked_packets = connection.GetReliabilitySystem().GetAckedPackets();
 			unsigned int lost_packets = connection.GetReliabilitySystem().GetLostPackets();
-			
+
 			float sent_bandwidth = connection.GetReliabilitySystem().GetSentBandwidth();
 			float acked_bandwidth = connection.GetReliabilitySystem().GetAckedBandwidth();
-			
-			printf( "rtt %.1fms, sent %d, acked %d, lost %d (%.1f%%), sent bandwidth = %.1fkbps, acked bandwidth = %.1fkbps\n", 
-				rtt * 1000.0f, sent_packets, acked_packets, lost_packets, 
-				sent_packets > 0.0f ? (float) lost_packets / (float) sent_packets * 100.0f : 0.0f, 
-				sent_bandwidth, acked_bandwidth );
-			
+
+			printf("rtt %.1fms, sent %d, acked %d, lost %d (%.1f%%), sent bandwidth = %.1fkbps, acked bandwidth = %.1fkbps\n",
+				rtt * 1000.0f, sent_packets, acked_packets, lost_packets,
+				sent_packets > 0.0f ? (float)lost_packets / (float)sent_packets * 100.0f : 0.0f,
+				sent_bandwidth, acked_bandwidth);
+
 			statsAccumulator -= 0.25f;
 		}
 
-		theNet::wait( DeltaTime );
+		theNet::wait(DeltaTime);
 	}
-	
+
 	theNet::ShutdownSockets();
 
 	return 0;
