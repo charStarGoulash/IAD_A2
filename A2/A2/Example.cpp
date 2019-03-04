@@ -384,7 +384,7 @@ int main(int argc, char * argv[])
 				}
 				if (fileDone)
 				{
-					std::cout << strlen((const char*)packetRec) << std::endl;
+					
 					uint32_t crcCheck = CRC::Calculate(packetRec, firstMessage.theTotalBytes, CRC::CRC_32());
 					if (crcCheck == firstMessage.crc)
 					{
@@ -423,7 +423,9 @@ int main(int argc, char * argv[])
 					}
 					else
 					{
-						std::cout << "Not Confirms, will try again" << std::endl;
+						std::cout << "File Recieved but CRC failed" << std::endl;
+						connection.KillLoop(1);
+						break;
 					}
 				}
 			}
