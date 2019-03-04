@@ -500,7 +500,7 @@ int main(int argc, char * argv[])
 
 		statsAccumulator += DeltaTime;
 
-		while (statsAccumulator >= 0.25f && connection.IsConnected())
+		/*while (statsAccumulator >= 0.25f && connection.IsConnected())
 		{
 			float rtt = connection.GetReliabilitySystem().GetRoundTripTime();
 
@@ -517,7 +517,7 @@ int main(int argc, char * argv[])
 				sent_bandwidth, acked_bandwidth);
 
 			statsAccumulator -= 0.25f;
-		}
+		}*/
 
 		theNet::wait(DeltaTime);
 	}
