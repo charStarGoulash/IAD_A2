@@ -215,8 +215,8 @@ int main(int argc, char * argv[])
 				is.read((char*)filePacket, fileLength);
 				firstMessage.theTotalBytes = fileLength;
 				firstMessage.thePacketSize = 256;
-				std::cout << strlen((const char*)filePacket) << std::endl;
 				firstMessage.crc = CRC::Calculate(filePacket, firstMessage.theTotalBytes, CRC::CRC_32());
+
 			}
 
 		}
