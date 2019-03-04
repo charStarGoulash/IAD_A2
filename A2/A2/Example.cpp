@@ -303,12 +303,14 @@ int main(int argc, char * argv[])
 				std::string temp = firstMessage.filename + "-" + std::to_string(firstMessage.theTotalBytes) + "-" + std::to_string(firstMessage.thePacketSize) + "-" + std::to_string(firstMessage.crc);
 
 				unsigned char* packet = (unsigned char*)temp.c_str();
-
-				checker = connection.SendPacket(packet, sizeof(packet));
+				
+				int charLength = strlen((const char*)packet);
+					
+				checker = connection.SendPacket(packet, charLength);
 				
 				while (!checker)
 				{
-					checker = connection.SendPacket(packet, sizeof(packet));
+					checker = connection.SendPacket(packet, charLength);
 				}
 
 				initialMessage = false;
