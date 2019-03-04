@@ -375,7 +375,7 @@ int main(int argc, char * argv[])
 				}
 				if (fileDone)
 				{
-					int crcCheck = CRC::Calculate(packet, firstMessage.theTotalBytes, CRC::CRC_32());
+					int crcCheck = CRC::Calculate(packetRec, firstMessage.theTotalBytes, CRC::CRC_32());
 					if (crcCheck == firstMessage.crc)
 					{
 						std::cout << "FILE CONFIRMED" << std::endl;
