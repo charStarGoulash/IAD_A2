@@ -31,6 +31,8 @@ int recBytesCheck = 256;
 unsigned char* packetRec;
 bool fileDone = false;
 
+int tempTotalBytesRecieved = 0;
+
 /////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 struct fileInfo
 {
@@ -333,7 +335,7 @@ int main(int argc, char * argv[])
 					{
 						int tempSize = firstMessage.theTotalBytes - sendBytesCheck;
 						checker = connection.SendPacket(filePacket, tempSize);
-						sendBytesCheck = 256;
+						sendBytesCheck += tempSize;
 						sendAccumulator -= 1.0f / sendRate;
 						exit(2);
 					}
@@ -369,6 +371,7 @@ int main(int argc, char * argv[])
 					if ((firstMessage.theTotalBytes - recBytesCheck) > 256)
 					{
 						int bytes_read = connection.ReceivePacket(packetRec, firstMessage.thePacketSize);
+						tempTotalBytesRecieved += bytes_read;
 						if (bytes_read == 0)
 							break;
 						recBytesCheck += 256;
@@ -377,6 +380,7 @@ int main(int argc, char * argv[])
 					{
 						int tempSize = firstMessage.theTotalBytes - recBytesCheck;
 						int bytes_read = connection.ReceivePacket(packetRec, tempSize);
+						tempTotalBytesRecieved += bytes_read;
 						if (bytes_read == 0)
 							break;
 						fileDone = true;
