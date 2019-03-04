@@ -24,12 +24,7 @@ int PacketSize;
 bool initialMessage = false;
 unsigned char * filePacket;
 int fileLength;
-int sendCounter = 256;
-int recieveCounter = 256;
-unsigned char* packet;
-int checkerForArray = 0;
-bool fileDone = false;
-int crcCheck = 0;
+
 /////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 struct fileInfo
 {
@@ -213,7 +208,7 @@ int main(int argc, char * argv[])
 				// read data as a block:
 				is.read((char*)filePacket, fileLength);
 				firstMessage.theTotalBytes = fileLength;
-				firstMessage.thePacketSize = fileLength / 256;
+				firstMessage.thePacketSize = fileLength / 50000;
 				firstMessage.crc = CRC::Calculate(filePacket, firstMessage.theTotalBytes, CRC::CRC_32());
 			}
 
@@ -301,9 +296,9 @@ int main(int argc, char * argv[])
 				bool checker;
 				std::string temp = firstMessage.filename + "-" + std::to_string(firstMessage.theTotalBytes) + "-" + std::to_string(firstMessage.thePacketSize) + "-" + std::to_string(firstMessage.crc);
 
-				unsigned char* packet2 = (unsigned char*)temp.c_str();
+				unsigned char* packet = (unsigned char*)temp.c_str();
 
-				checker = connection.SendPacket(packet2, fileLength);
+				checker = connection.SendPacket(packet, fileLength);
 
 				initialMessage = false;
 			}
@@ -311,28 +306,11 @@ int main(int argc, char * argv[])
 			else if (mode == Client && !initialMessage)
 			{
 				bool checker;
-				//////////////////Changing below for sending packets/////////////////////////
-				if (sendCounter != firstMessage.theTotalBytes)
-				{
-					if ((firstMessage.theTotalBytes - sendCounter) > 256)
-					{
-						checker = connection.SendPacket(filePacket, firstMessage.thePacketSize);
-						sendCounter += 256;
-						sendAccumulator -= 1.0f / sendRate;
-					}
-					else
-					{
-						int tempPacketSize = firstMessage.theTotalBytes - sendCounter;
-						checker = connection.SendPacket(filePacket, tempPacketSize);
-						sendAccumulator -= 1.0f / sendRate;
-						sendCounter = firstMessage.theTotalBytes;
 
-					}
-				}
-				else
-				{
-					exit(2);
-				}
+				checker = connection.SendPacket(filePacket, firstMessage.theTotalBytes);
+				sendAccumulator -= 1.0f / sendRate;
+
+				exit(2);
 
 			}
 			else
@@ -347,54 +325,14 @@ int main(int argc, char * argv[])
 		//BELOW IS WHERE THE SERVER RECIEVES WHAT THE CLIENT SENT---ATTILA-DIV COMMENT-ONLY CHANGED CODE HERE
 		while (true)
 		{
-			bool checker;
-			int bytes_read = 0;
-			if (initialMessage)
-			{
-				packet = new unsigned char[30000];
-				bytes_read = connection.ReceivePacket(packet, sizeof(packet));
-				if (bytes_read == 0)
-					break;
-
-			}
-
-			if (!initialMessage && checkerForArray == 0)
-			{
-				packet = new unsigned char[firstMessage.theTotalBytes];
-				checkerForArray = 1;
-			}
-			if (recieveCounter != firstMessage.theTotalBytes)
-			{
-				if ((firstMessage.theTotalBytes - recieveCounter) > 256)
-				{
-					bytes_read = connection.ReceivePacket(packet, firstMessage.thePacketSize);
-					if (bytes_read == 0)
-						break;
-					recieveCounter = +256;
-					sendAccumulator -= 1.0f / sendRate;
-				}
-				else
-				{
-					int tempPacketSize = firstMessage.theTotalBytes - recieveCounter;
-					bytes_read = connection.ReceivePacket(packet, tempPacketSize);
-					if (bytes_read == 0)
-						break;
-					recieveCounter = firstMessage.theTotalBytes;
-					fileDone = true;
-					sendAccumulator -= 1.0f / sendRate;
-
-				}
-			}
-
-
-			//////CHANGING BELOW FOR RECEIVING PACKETS///////////////////
-
-
+			unsigned char packet[30000];
+			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
+			if (bytes_read == 0)
+				break;
 			/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
-
-			if (mode == Server && !initialMessage && fileDone)
+			int crcCheck = CRC::Calculate(packet, firstMessage.theTotalBytes, CRC::CRC_32());
+			if (mode == Server && !initialMessage)
 			{
-				crcCheck = CRC::Calculate(packet, firstMessage.theTotalBytes, CRC::CRC_32());
 				if (crcCheck == firstMessage.crc)
 				{
 					std::cout << "FILE CONFIRMED" << std::endl;
@@ -422,7 +360,7 @@ int main(int argc, char * argv[])
 						break;
 					}
 
-					for (int i = 0; i < firstMessage.theTotalBytes; ++i)
+					for (int i = 0; i < bytes_read; ++i)
 					{
 						outdata << packet[i];
 					}
