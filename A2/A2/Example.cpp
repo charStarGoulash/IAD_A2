@@ -342,7 +342,7 @@ int main(int argc, char * argv[])
 		}
 
 		//BELOW IS WHERE THE SERVER RECIEVES WHAT THE CLIENT SENT---ATTILA-DIV COMMENT-ONLY CHANGED CODE HERE
-		while (true)
+		while (true && mode == Server)
 		{
 			unsigned char packet[30000];
 			if (initialMessage)
