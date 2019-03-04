@@ -25,8 +25,8 @@ bool initialMessage = false;
 unsigned char * filePacket;
 int fileLength;
 
-int sendBytesCheck = 256;
-int recBytesCheck = 256;
+int sendBytesCheck = 0;
+int recBytesCheck = 0;
 
 unsigned char* packetRec;
 bool fileDone = false;
