@@ -25,6 +25,12 @@ bool initialMessage = false;
 unsigned char * filePacket;
 int fileLength;
 
+int sendBytesCheck = 256;
+int recBytesCheck = 256;
+
+unsigned char* packetRec;
+bool fileDone = false;
+
 /////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 struct fileInfo
 {
@@ -307,10 +313,23 @@ int main(int argc, char * argv[])
 			{
 				bool checker;
 
-				checker = connection.SendPacket(filePacket, firstMessage.theTotalBytes);
-				sendAccumulator -= 1.0f / sendRate;
-
-				exit(2);
+				if (sendBytesCheck < firstMessage.theTotalBytes)
+				{
+					if ((firstMessage.theTotalBytes - sendBytesCheck) > 256)
+					{
+						checker = connection.SendPacket(filePacket, firstMessage.thePacketSize);
+						sendBytesCheck += 256;
+						sendAccumulator -= 1.0f / sendRate;
+					}
+					else
+					{
+						int tempSize = firstMessage.theTotalBytes - sendBytesCheck;
+						checker = connection.SendPacket(filePacket, tempSize);
+						sendBytesCheck = 256;
+						sendAccumulator -= 1.0f / sendRate;
+						exit(2);
+					}
+				}
 
 			}
 			else
@@ -326,51 +345,76 @@ int main(int argc, char * argv[])
 		while (true)
 		{
 			unsigned char packet[30000];
-			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
-			if (bytes_read == 0)
-				break;
+			if (initialMessage)
+			{
+				int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
+				if (bytes_read == 0)
+					break;
+			}
+
 			/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
-			int crcCheck = CRC::Calculate(packet, firstMessage.theTotalBytes, CRC::CRC_32());
+			
 			if (mode == Server && !initialMessage)
 			{
-				if (crcCheck == firstMessage.crc)
+				if (recBytesCheck < firstMessage.theTotalBytes)
 				{
-					std::cout << "FILE CONFIRMED" << std::endl;
-					///////////////////////////////////////////////////////TEST///////////Displaying speed after reciving file
-					float rtt = connection.GetReliabilitySystem().GetRoundTripTime();
+					if ((firstMessage.theTotalBytes - recBytesCheck) > 256)
+					{
+						int bytes_read = connection.ReceivePacket(packetRec, firstMessage.thePacketSize);
+						if (bytes_read == 0)
+							break;
+					}
+					else
+					{
+						int tempSize = firstMessage.theTotalBytes - recBytesCheck;
+						int bytes_read = connection.ReceivePacket(packetRec, tempSize);
+						if (bytes_read == 0)
+							break;
+						fileDone = true;
+					}
+				}
+				if (fileDone)
+				{
+					int crcCheck = CRC::Calculate(packet, firstMessage.theTotalBytes, CRC::CRC_32());
+					if (crcCheck == firstMessage.crc)
+					{
+						std::cout << "FILE CONFIRMED" << std::endl;
+						///////////////////////////////////////////////////////TEST///////////Displaying speed after reciving file
+						float rtt = connection.GetReliabilitySystem().GetRoundTripTime();
 
-					unsigned int sent_packets = connection.GetReliabilitySystem().GetSentPackets();
-					unsigned int acked_packets = connection.GetReliabilitySystem().GetAckedPackets();
-					unsigned int lost_packets = connection.GetReliabilitySystem().GetLostPackets();
+						unsigned int sent_packets = connection.GetReliabilitySystem().GetSentPackets();
+						unsigned int acked_packets = connection.GetReliabilitySystem().GetAckedPackets();
+						unsigned int lost_packets = connection.GetReliabilitySystem().GetLostPackets();
 
-					float sent_bandwidth = connection.GetReliabilitySystem().GetSentBandwidth();
-					float acked_bandwidth = connection.GetReliabilitySystem().GetAckedBandwidth();
+						float sent_bandwidth = connection.GetReliabilitySystem().GetSentBandwidth();
+						float acked_bandwidth = connection.GetReliabilitySystem().GetAckedBandwidth();
 
-					printf("rtt %.1fms, sent %d, acked %d, lost %d (%.1f%%), sent bandwidth = %.1fkbps, acked bandwidth = %.1fkbps\n",
-						rtt * 1000.0f, sent_packets, acked_packets, lost_packets,
-						sent_packets > 0.0f ? (float)lost_packets / (float)sent_packets * 100.0f : 0.0f,
-						sent_bandwidth, acked_bandwidth);
-					////////////////////////////////////////////////////////////////////////////////////
-					std::ofstream outdata; // outdata is like cin
+						printf("rtt %.1fms, sent %d, acked %d, lost %d (%.1f%%), sent bandwidth = %.1fkbps, acked bandwidth = %.1fkbps\n",
+							rtt * 1000.0f, sent_packets, acked_packets, lost_packets,
+							sent_packets > 0.0f ? (float)lost_packets / (float)sent_packets * 100.0f : 0.0f,
+							sent_bandwidth, acked_bandwidth);
+						////////////////////////////////////////////////////////////////////////////////////
+						std::ofstream outdata; // outdata is like cin
 
-					outdata.open(firstMessage.filename); // opens the file
-					if (!outdata)
-					{ // file couldn't be opened
-						std::cout << "Error: file could not be opened" << std::endl;
+						outdata.open(firstMessage.filename); // opens the file
+						if (!outdata)
+						{ // file couldn't be opened
+							std::cout << "Error: file could not be opened" << std::endl;
+							break;
+						}
+
+						for (int i = 0; i < firstMessage.theTotalBytes; ++i)
+						{
+							outdata << packet[i];
+						}
+						outdata.close();
+						connection.KillLoop(1);
 						break;
 					}
-
-					for (int i = 0; i < bytes_read; ++i)
+					else
 					{
-						outdata << packet[i];
+						std::cout << "Not Confirms, will try again" << std::endl;
 					}
-					outdata.close();
-					connection.KillLoop(1);
-					break;
-				}
-				else
-				{
-					std::cout << "Not Confirms, will try again" << std::endl;
 				}
 			}
 			/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
@@ -420,6 +464,7 @@ int main(int argc, char * argv[])
 				firstMessage.thePacketSize = std::stoi(TEMPthePacketSize);
 				firstMessage.crc = std::stoll(TEMPcrc);
 				initialMessage = false;
+				packetRec = new unsigned char[firstMessage.theTotalBytes];
 			}
 
 		}
