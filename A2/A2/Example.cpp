@@ -333,7 +333,21 @@ int main( int argc, char * argv[] )
 				if (crcCheck == firstMessage.crc)
 				{
 					std::cout << "FILE CONFIRMED" << std::endl;
+					///////////////////////////////////////////////////////TEST///////////
+					float rtt = connection.GetReliabilitySystem().GetRoundTripTime();
 
+					unsigned int sent_packets = connection.GetReliabilitySystem().GetSentPackets();
+					unsigned int acked_packets = connection.GetReliabilitySystem().GetAckedPackets();
+					unsigned int lost_packets = connection.GetReliabilitySystem().GetLostPackets();
+
+					float sent_bandwidth = connection.GetReliabilitySystem().GetSentBandwidth();
+					float acked_bandwidth = connection.GetReliabilitySystem().GetAckedBandwidth();
+
+					printf("rtt %.1fms, sent %d, acked %d, lost %d (%.1f%%), sent bandwidth = %.1fkbps, acked bandwidth = %.1fkbps\n",
+						rtt * 1000.0f, sent_packets, acked_packets, lost_packets,
+						sent_packets > 0.0f ? (float)lost_packets / (float)sent_packets * 100.0f : 0.0f,
+						sent_bandwidth, acked_bandwidth);
+					////////////////////////////////////////////////////////////////////////////////////
 					std::ofstream outdata; // outdata is like cin
 
 					outdata.open(firstMessage.filename); // opens the file
