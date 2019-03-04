@@ -418,7 +418,7 @@ int main( int argc, char * argv[] )
 				/////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 				firstMessage.theTotalBytes = std::stoi(TEMPtheTotalBytes);
 				firstMessage.thePacketSize = std::stoi(TEMPthePacketSize);
-				firstMessage.crc = std::stoi(TEMPcrc);
+				firstMessage.crc = std::stoll(TEMPcrc);
 				initialMessage = false;
 			}
 		
