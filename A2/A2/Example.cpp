@@ -309,6 +309,9 @@ int main( int argc, char * argv[] )
 			
 				checker = connection.SendPacket(filePacket, firstMessage.theTotalBytes);
 				sendAccumulator -= 1.0f / sendRate;
+
+				exit(2);
+
 			}
 			else
 			{
@@ -333,7 +336,7 @@ int main( int argc, char * argv[] )
 				if (crcCheck == firstMessage.crc)
 				{
 					std::cout << "FILE CONFIRMED" << std::endl;
-					///////////////////////////////////////////////////////TEST///////////
+					///////////////////////////////////////////////////////TEST///////////Displaying speed after reciving file
 					float rtt = connection.GetReliabilitySystem().GetRoundTripTime();
 
 					unsigned int sent_packets = connection.GetReliabilitySystem().GetSentPackets();
@@ -362,7 +365,7 @@ int main( int argc, char * argv[] )
 						outdata << packet[i];
 					}
 					outdata.close();
-
+					connection.KillLoop(1);
 					break;
 				}
 				else

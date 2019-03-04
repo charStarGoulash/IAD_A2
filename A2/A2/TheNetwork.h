@@ -461,6 +461,28 @@ namespace theNet
 				}
 			}
 		}
+		//If flag == 1 then force timeout
+		virtual void KillLoop(int flag)
+		{
+			assert(running);
+			
+			if (state == Connecting )
+			{
+				printf("connect timed out\n");
+				ClearData();
+				state = ConnectFail;
+				OnDisconnect();
+			}
+			else if (state == Connected && flag == 1)
+			{
+				printf("connection timed out\n");
+				ClearData();
+				if (state == Connecting)
+					state = ConnectFail;
+				OnDisconnect();
+			}
+			
+		}
 		
 		virtual bool SendPacket( const unsigned char data[], int size )
 		{
