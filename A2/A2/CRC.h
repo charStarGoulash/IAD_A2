@@ -1,5 +1,5 @@
 #pragma once
-
+//Below is a the CRC header file I had found from the website given in the comments
 /**
 	@file CRC.h
 	@author Daniel Bahr
