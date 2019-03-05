@@ -215,6 +215,8 @@ int main(int argc, char * argv[])
 
 				// read data as a block:
 				is.read((char*)filePacket, fileLength);
+
+				//Fill the struct with the data from file
 				firstMessage.theTotalBytes = fileLength;
 				firstMessage.thePacketSize = 256;
 				firstMessage.crc = CRC::Calculate(filePacket, firstMessage.theTotalBytes, CRC::CRC_32());
@@ -308,11 +310,11 @@ int main(int argc, char * argv[])
 				
 				int charLength = strlen((const char*)packet);
 					
-				checker = connection.SendPacket(packet, charLength);
+				checker = connection.SendPacket(packet, charLength);//Send initial message
 				
 				while (!checker)
 				{
-					checker = connection.SendPacket(packet, charLength);
+					checker = connection.SendPacket(packet, charLength);//send again if it fails
 				}
 
 				initialMessage = false;
@@ -322,15 +324,15 @@ int main(int argc, char * argv[])
 			{
 				bool checker;
 
-				if (sendBytesCheck < firstMessage.theTotalBytes)
+				if (sendBytesCheck < firstMessage.theTotalBytes) //Check to make sure im not sending more than I have to
 				{
-					if ((firstMessage.theTotalBytes - sendBytesCheck) > 256)
+					if ((firstMessage.theTotalBytes - sendBytesCheck) > 256)//Send the file in packets of 256
 					{
 						checker = connection.SendPacket(filePacket, firstMessage.thePacketSize);
 						sendBytesCheck += 256;
 						sendAccumulator -= 1.0f / sendRate;
 					}
-					else
+					else //If there is only the last bit left to send, figure out the amount of bytes
 					{
 						int tempSize = firstMessage.theTotalBytes - sendBytesCheck;
 						checker = connection.SendPacket(filePacket, tempSize);
@@ -354,6 +356,7 @@ int main(int argc, char * argv[])
 		while (true && mode == Server)
 		{
 			unsigned char packet[30000];
+			//below I am using this if statement to dynamically allocate the array only ONCE
 			if (initialMessage)
 			{
 				int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
@@ -367,7 +370,7 @@ int main(int argc, char * argv[])
 			{
 				if (recBytesCheck < firstMessage.theTotalBytes)
 				{
-					if ((firstMessage.theTotalBytes - recBytesCheck) > 256)
+					if ((firstMessage.theTotalBytes - recBytesCheck) > 256) //Making sure I dont read more than I have to
 					{
 						int bytes_read = connection.ReceivePacket(packetRec, firstMessage.thePacketSize);
 						tempTotalBytesRecieved += bytes_read;
@@ -375,7 +378,7 @@ int main(int argc, char * argv[])
 							break;
 						recBytesCheck += 256;
 					}
-					else
+					else //Below I am making sure to only recieve the number of bytes sent in the inital message
 					{
 						int tempSize = firstMessage.theTotalBytes - recBytesCheck;
 						int bytes_read = connection.ReceivePacket(packetRec, tempSize);
@@ -388,8 +391,9 @@ int main(int argc, char * argv[])
 				}
 				if (fileDone)
 				{
-					
+					//Below I check the CRC
 					uint32_t crcCheck = CRC::Calculate(packetRec, firstMessage.theTotalBytes, CRC::CRC_32());
+
 					if (crcCheck == firstMessage.crc)
 					{
 						std::cout << "FILE CONFIRMED" << std::endl;
@@ -416,7 +420,7 @@ int main(int argc, char * argv[])
 							std::cout << "Error: file could not be opened" << std::endl;
 							break;
 						}
-
+						//Below I write to the file the data I was sent
 						for (int i = 0; i < firstMessage.theTotalBytes; ++i)
 						{
 							outdata << packet[i];
