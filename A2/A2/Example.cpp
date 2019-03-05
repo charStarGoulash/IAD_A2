@@ -218,7 +218,7 @@ int main(int argc, char * argv[])
 				firstMessage.theTotalBytes = fileLength;
 				firstMessage.thePacketSize = 256;
 				firstMessage.crc = CRC::Calculate(filePacket, firstMessage.theTotalBytes, CRC::CRC_32());
-
+				int tempLen = strlen((const char*)packetRec);
 			}
 
 		}
@@ -383,6 +383,7 @@ int main(int argc, char * argv[])
 						tempTotalBytesRecieved += bytes_read;
 						if (bytes_read == 0)
 							break;
+						int tempLen = strlen((const char*)packetRec);
 						fileDone = true;
 					}
 				}
