@@ -32,8 +32,6 @@ unsigned char* packetRec;
 bool fileDone = false;
 
 int tempTotalBytesRecieved = 0;
-bool loopChecker = true;
-bool recLoopChecker = true;
 
 /////////////////////////////////////////CHANGED BELOW FEB 25 2019 //////////////////////////////////////
 struct fileInfo
@@ -324,27 +322,22 @@ int main(int argc, char * argv[])
 			{
 				bool checker;
 
-				if (/*sendBytesCheck <= firstMessage.theTotalBytes &&*/ loopChecker)
+				if (sendBytesCheck < firstMessage.theTotalBytes)
 				{
-					//if ((firstMessage.theTotalBytes - sendBytesCheck) > 256)
-					//{
+					if ((firstMessage.theTotalBytes - sendBytesCheck) > 256)
+					{
 						checker = connection.SendPacket(filePacket, firstMessage.thePacketSize);
 						sendBytesCheck += 256;
 						sendAccumulator -= 1.0f / sendRate;
-
-						if (sendBytesCheck > firstMessage.theTotalBytes)
-						{
-							loopChecker = false;
-						}
-					//}
-					/*else
+					}
+					else
 					{
 						int tempSize = firstMessage.theTotalBytes - sendBytesCheck;
 						checker = connection.SendPacket(filePacket, tempSize);
 						sendBytesCheck += tempSize;
 						sendAccumulator -= 1.0f / sendRate;
 						exit(2);
-					}*/
+					}
 				}
 
 			}
@@ -372,22 +365,16 @@ int main(int argc, char * argv[])
 			
 			if (mode == Server && !initialMessage)
 			{
-				if (/*recBytesCheck < firstMessage.theTotalBytes*/ recLoopChecker)
+				if (recBytesCheck < firstMessage.theTotalBytes)
 				{
-					/*if ((firstMessage.theTotalBytes - recBytesCheck) > 256)
-					{*/
+					if ((firstMessage.theTotalBytes - recBytesCheck) > 256)
+					{
 						int bytes_read = connection.ReceivePacket(packetRec, firstMessage.thePacketSize);
 						tempTotalBytesRecieved += bytes_read;
 						if (bytes_read == 0)
 							break;
-
-						if (tempTotalBytesRecieved >= firstMessage.theTotalBytes)
-						{
-							recLoopChecker = false;
-							fileDone = true;
-						}
-						//recBytesCheck += 256;
-					/*}
+						recBytesCheck += 256;
+					}
 					else
 					{
 						int tempSize = firstMessage.theTotalBytes - recBytesCheck;
@@ -397,7 +384,7 @@ int main(int argc, char * argv[])
 							break;
 						int tempLen = strlen((const char*)packetRec);
 						fileDone = true;
-					}*/
+					}
 				}
 				if (fileDone)
 				{
